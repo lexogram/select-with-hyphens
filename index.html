@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <style>
+    body { max-width: 30em; margin: 0 auto; }
     small { color: #999; }
     strong { color: #600; }
     span { background-color: #fcc;}
@@ -70,7 +71,7 @@
     const forceCheckBox = document.getElementById("alterLineBreak")
     const soft = document.getElementById("soft")
     const shy = document.getElementById("shy")
-    const widths = ["16em", "20em", "24em"]
+    const widths = ["16em", "20em", "30em"]
     let index = 0
     forceCheckBox.addEventListener("click", (event) => {
       soft.style.width = widths[index]
