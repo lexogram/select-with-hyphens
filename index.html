@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <style>
+    small { color: #999; }
+    strong { color: #600; }
+    span { background-color: #fcc;}
+    input:checked + span { background-color: #cfc; }
+    pre { display: inline; }
+  </style>
+  
+  <script defer src="selectWordsWithHyphens.js"></script>
+  
+  <title>Input Selection</title>
+</head>
+<body>
+  <h2>Double-click on the words in red and check if the selection corresponds to your expectations.</h2>
+  <label for="dontUseSelectHyphenatedWords">
+    <input type="checkbox"id="dontUseSelectHyphenatedWords" checked>
+    <span id="use">Use <pre>selectHyphenatedWords</pre></span>
+  </label>
+  <h3>Selection extended to include whole word</h3>
+  <p>Here is the <strong>nine-o'clock</strong> news bulletin.
+  <br><small>standard hyphen (&amp;#8208;) and neutral vertical apostrophe (&amp;#39;)</small></p>
+  <p>Here is the<strong> nine‑o’clock </strong>news bulletin.
+  <br><small>non-breaking hyphen (&amp;8209;) and right single quotation mark (&amp;#8217;)</small></p>
+  <button id="alterLineBreak">
+    Alter line break
+  </button>
+  <p id="soft">A word containing soft hyphens — <strong id="shy">un&shy;predict&shy;able</strong> — which are invisible unless they appear at a line break.</p>
+  <small>(un&amp;shy;predict&amp;shy;able)</small>
+  </p>
+  <input type="text" name="" id="text" value="The ninety-nine-o'clock news">
+  <br>
+  <input type="text" name="" id="text" value="The ninety‑nine‑o’clock news">
+  <hr>
+  <h3>Selection not extended</h3>
+  <p>A double <strong>hyphen--which is rare--can</strong> be used for a dash, but does not create a compound word.</p>
+  <p>These books are my <strong>kids'</strong>.<br>
+  <small>The possessive <strong>'</strong>, <i>should</i> be selected here, as it is an integral part of the word. However, this script does not attempt to distinguish between this case and a closing single quote (see example below). This matches the behaviour that is found in all major browsers.</small>
+  <p>'These are my <strong>kids</strong>', she said.</p>
+  <hr>
+  <input type="text" name="" id="text" value="These books are my kids'.">
+  <br>
+  <input type="text" name="" id="text" value="'These are my kids', she said.">
+  
+  
+  <script>
+  ;(function () {
+    "use strict"
+
+    // Set global variable dontUseSelectHyphenatedWords
+    const dontCheckbox = document.getElementById("dontUseSelectHyphenatedWords")
+    window.dontUseSelectHyphenatedWords = false
+    dontCheckbox.checked = !dontUseSelectHyphenatedWords
+
+    const span = document.getElementById("use")
+    dontCheckbox.addEventListener("change", (event) => {
+      window.dontUseSelectHyphenatedWords = !event.target.checked
+      span.innerHTML = dontUseSelectHyphenatedWords
+      ? "Don't use <pre>selectHyphenatedWords</pre>"
+      : "Use <pre>selectHyphenatedWords</pre>"
+    })
+
+    // Force line break
+    const forceCheckBox = document.getElementById("alterLineBreak")
+    const soft = document.getElementById("soft")
+    const shy = document.getElementById("shy")
+    const widths = ["16em", "20em", "24em"]
+    let index = 0
+    forceCheckBox.addEventListener("click", (event) => {
+      soft.style.width = widths[index]
+      index = (index + 1) % widths.length
+    })
+  })()
+  </script>
+  
+</body>
+</html>
