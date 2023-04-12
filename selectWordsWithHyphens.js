@@ -2,14 +2,28 @@
 
 // Tweak to make a double-click select words with hyphens or
 // apostrophes.
-// 
-// As of 2023-04-11, None of the major Mac browsers selects whole
-// words with hyphens, like "ad-lib". This tweak fixes the hypen
-// issue.
-// 
-// Note: Firefox (at least until version 111.0.1) doesn't
+//
+// As of 2023-04-12, None of the major browsers selects whole
+// words with hyphens, like "ad-lib". Only the text before or
+// after the hyphen, or the hyphen on its own, will be selected.
+// This tweak fixes the hypen issue.
+//
+// Note: Firefox (at least until version 111.0.1) also doesn't
 // automatically select whole words with apostrophes like the word
-// "doesn't". This tweak also treats that issue.
+// "doesn't".
+//
+// In Safari (at least until version 16.3), a double-click that
+// lands precisely on an apostrophe will select only the
+// apostrophe. However, a double-click on any *letter* in a word
+// that contains an apostrophe will select the entire word,
+// including the apostrophe.
+//
+// This tweak also treats these issues.
+
+// On Windows, a double-click on a word will also select the space
+// after the word, if there is one. On MacOS and Ubuntu, only the
+// word itself is selected. This tweak respects these
+// platform-specific differences.
 
 // In the comments below, I'll use the word "join" to mean any of
 // the following hyphen and apostrophe characters:
@@ -20,7 +34,7 @@
 //  * ' (apostrophe: &#39;)
 //  * ’ (right single quotation mark: &#8217;).
 //
-// NOTE 1: It is not trivial to distinguish between a final 
+// NOTE 1: It is not trivial to distinguish between a final
 // apostrophe, which is an integral part of a word, that is used
 // to indicate possession)...
 //
@@ -31,7 +45,7 @@
 //   He said, "She said, 'Meet Jo and Di. These are my kids'".
 //
 // For simplicity, this script ignores both cases. As of 2023-04-12,
-// this is the same functionality as is found in all major browsers. 
+// all major browsers behave in exactly the same way.
 //
 // NOTE 2: Two hyphens can be used to indicate a dash—a character
 // which indicates a secondary thought–and some writers leave no
@@ -39,7 +53,7 @@
 // words. "Two consecutive hypens should be ignored--at least I
 // think they should."
 
-  
+
 
 
 ;(function selectWholeWordsWithHyphens(){
@@ -51,7 +65,7 @@
   // Regex designed to find a word+join before the selected word.
   // Examples: ad-|lib|  seven-o'|clock|
   // It finds the last chunk with no non-word characters (except for
-  // joins) before the first selected character. 
+  // joins) before the first selected character.
   var startRegex = /(\w+[\u00AD‑'’-]?)+$/g
 
   // Regex designed to find a join character after the selected word.
@@ -72,11 +86,20 @@
     var target = event.target
     var isInput = target.tagName === "INPUT"
 
+    // In browsers on Windows, a double-click on a word will
+    // select the word _and_ a space character that immediately
+    // follows it. We will need to adjust for this.
+    var lastSelectedCharIsSpace = 0
+
     if (isInput) {
       var start = target.selectionStart
       var end = target.selectionEnd
       var string = target.value
-      
+      lastSelectedCharIsSpace = (
+        string.substring(end-1, end) === " "
+      )
+      end -= lastSelectedCharIsSpace // true → 1, false → 0
+
     } else if (!selection.rangeCount) {
       return
 
@@ -88,7 +111,11 @@
       // different.
       var container = range.endContainer
       var end = range.endOffset
-      if (!end) {
+      lastSelectedCharIsSpace = (
+        container.textContent.substring(end-1, end) === " "
+      )
+      end -= lastSelectedCharIsSpace // true → 1, false → 0
+      if (!end ) {
         // The selection extends to the end of the startContainer
         // and ends at char index 0 in the endContainer. Use the
         // startContainer instead
@@ -98,15 +125,15 @@
       var string = container.textContent
       var start = (container === range.startContainer)
         ? range.startOffset
-        : 0 // The selection starts at the very end of the 
+        : 0 // The selection starts at the very end of the
             // startContainer, or at char index 0 of the
             // endContainer
     }
-    
+
     var selectionUpdated = false
     var chunk = string.substring(start, end)
     var ignore = ignoreRegex.test(chunk)
-              || chunk.search(edgeRegex) < 0    
+              || chunk.search(edgeRegex) < 0
 
     if (ignore) {
       // The selection contains neither word nor join characters
@@ -119,6 +146,7 @@
 
     if (selectionUpdated) {
       if (isInput) {
+        end += lastSelectedCharIsSpace
         target.setSelectionRange(start, end)
       } else {
         selection.removeAllRanges()
@@ -131,8 +159,8 @@
       var result
         , index
       string = string.substring(0, offset)
-      
-      while (result = startRegex.exec(string)) {        
+
+      while (result = startRegex.exec(string)) {
         index = result.index
         lastIndex = startRegex.lastIndex
       }
@@ -147,13 +175,13 @@
       }
     }
 
-    function extendSelectionForwardAfterHyphen(string, offset) { 
+    function extendSelectionForwardAfterHyphen(string, offset) {
       if (!offset) {
         return
       }
 
       string = string.substring(offset)
-      var result = endRegex.exec(string)      
+      var result = endRegex.exec(string)
 
       if (result) {
         end = offset + result[0].length
